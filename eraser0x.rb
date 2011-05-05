@@ -13,6 +13,7 @@ PATTERN = Regexp.union([
   /ふぁぼ/,
   /黄色/,
   /サンダース/,
+  /インデント/,
   /\(＃＾ω＾\)/,
 ])
 
@@ -48,6 +49,7 @@ userstream.user do |status|
       end
     end
   when status.text
+    break if status.retweeted_status
     break unless status.text =~ PATTERN
     unless Twitter.friendship_exists?(status.user.screen_name, account)
       Twitter.unfollow status.user.id
