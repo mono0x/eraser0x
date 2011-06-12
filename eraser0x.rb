@@ -6,7 +6,7 @@ require 'twitter'
 require 'userstream'
 
 PATTERN = Regexp.union([
-  /☆/,
+  /☆|★/,
   /消し(?:ゴム|ごむ)/,
   /fav/,
   /mono/i,
