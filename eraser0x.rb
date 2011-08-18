@@ -57,6 +57,7 @@ userstream.user do |status|
       break
     end
     Twitter.favorite_create status.id
+    Twitter.retweet status.id
   end
 end
 
