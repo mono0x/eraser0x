@@ -15,6 +15,7 @@ PATTERN = Regexp.union([
   /サンダース/,
   /インデント/,
   /\(＃＾ω＾\)/,
+  /生首/,
 ])
 
 config = JSON.parse(open('config.json').read)
