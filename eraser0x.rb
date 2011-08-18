@@ -45,14 +45,14 @@ userstream.user do |status|
   case
   when status.event == 'follow'
     if status.source.screen_name != account
-      unless Twitter.friendship_exists?(account, status.source.screen_name)
+      unless Twitter.friendship?(account, status.source.screen_name)
         Twitter.follow status.source.id
       end
     end
   when status.text
     break if status.retweeted_status
     break unless status.text =~ PATTERN
-    unless Twitter.friendship_exists?(status.user.screen_name, account)
+    unless Twitter.friendship?(status.user.screen_name, account)
       Twitter.unfollow status.user.id
       break
     end
