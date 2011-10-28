@@ -20,6 +20,12 @@ PATTERN = Regexp.union([
   /生首/,
 ])
 
+MESSAGES = [
+  '( ‘д‘⊂彡☆))Д´) ﾊﾟｰﾝ ',
+  '(＃＾ω＾)ﾋﾟｷﾋﾟｷ',
+  '＾＾',
+]
+
 config = JSON.parse(open('config.json').read)
 
 account = config['account']
@@ -60,6 +66,11 @@ userstream.user do |status|
     end
     Twitter.favorite_create status.id
     Twitter.retweet status.id
+    if rand < 0.05
+      Twitter.update(
+        "@#{status.user.screen_name} #{MESSAGES[rand MESSAGES.size]}",
+        :in_reply_to_status_id => status.id)
+    end
   end
 end
 
