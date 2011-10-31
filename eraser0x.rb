@@ -7,6 +7,7 @@ require 'userstream'
 
 PATTERN = Regexp.union([
   /☆|★/,
+  /スター/,
   /消し(?:ゴム|ごむ)/,
   /fav/,
   /mono/i,
