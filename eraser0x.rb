@@ -68,11 +68,11 @@ userstream.user do |status|
       end
     end
   when status.text
-    break if status.retweeted_status
-    break unless status.text =~ PATTERN
+    next if status.retweeted_status
+    next unless status.text =~ PATTERN
     unless Twitter.friendship?(status.user.screen_name, account)
       Twitter.unfollow status.user.id
-      break
+      next
     end
     Twitter.favorite_create status.id
     Twitter.retweet status.id
