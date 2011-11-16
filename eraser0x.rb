@@ -60,6 +60,7 @@ access_token = OAuth::AccessToken.new(
 
 userstream = Userstream.new(consumer, access_token)
 userstream.user do |status|
+  STDERR.puts status.inspect
   case
   when status.event == 'follow'
     if status.source.screen_name != account
