@@ -24,18 +24,7 @@ PATTERN = Regexp.union([
   /放送/,
 ])
 
-MESSAGES = [
-  '( ‘д‘⊂彡☆))Д´) ﾊﾟｰﾝ ',
-  '(＃＾ω＾)ﾋﾟｷﾋﾟｷ',
-  '＾＾',
-  '(＃＾ω＾)ﾎﾟｺﾎﾟｺ イェイ!',
-  'ﾁﾝﾁﾝ!! ﾎﾟｺﾎﾟｺ!!',
-  '黙れ小僧',
-  '期待',
-  'bot早く弄れｗｗ',
-  '■━⊂( ･∀･) 彡ｶﾞｯ☆( д) ﾟ ﾟ',
-  '＜●＞＜●＞',
-]
+messages = JSON.parse(open('messages.json', 'r:utf-8').read)['messages']
 
 config = JSON.parse(open('config.json').read)
 
@@ -71,6 +60,24 @@ userstream.user do |status|
     end
   when status.text
     next if status.retweeted_status
+    if status.text =~ /\A@#{account}\s+(.+)\Z/m
+      m = $1.gsub(/[@#]/, '_')
+      unless Twitter.friendship?(status.user.screen_name, account)
+        Twitter.unfollow status.user.id
+        next
+      end
+      unless messages.include?(m)
+        messages.push m
+        json = { 'messages' => messages }.to_json
+        open('messages.json', 'w') do |f|
+          f << json
+        end
+      end
+      Twitter.update(
+        "@#{status.user.screen_name} #{messages[rand messages.size]}",
+        :in_reply_to_status_id => status.id)
+      next
+    end
     next unless status.text =~ PATTERN
     unless Twitter.friendship?(status.user.screen_name, account)
       Twitter.unfollow status.user.id
@@ -80,7 +87,7 @@ userstream.user do |status|
     Twitter.retweet status.id
     if rand < 0.05
       Twitter.update(
-        "@#{status.user.screen_name} #{MESSAGES[rand MESSAGES.size]}",
+        "@#{status.user.screen_name} #{messages[rand messages.size]}",
         :in_reply_to_status_id => status.id)
     end
   end
