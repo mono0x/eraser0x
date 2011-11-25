@@ -58,6 +58,10 @@ userstream.user do |status|
         Twitter.follow status.source.id
       end
     end
+  when status.direct_message
+    if status.direct_message.sender_screen_name == config['author']
+      Twitter.update status.direct_message.text
+    end
   when status.text
     next if status.retweeted_status
     if status.text =~ /\A@#{account}\s+(.+)\Z/m
