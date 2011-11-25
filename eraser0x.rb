@@ -9,6 +9,7 @@ PATTERN = Regexp.union([
   /☆|★/,
   /スター/,
   /消し(?:ゴム|ごむ)/,
+  /eraser/,
   /fav/,
   /(?:\A|[^@])mono/i,
   /ふぁぼ/,
