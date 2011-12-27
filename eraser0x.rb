@@ -58,6 +58,19 @@ userstream.user do |status|
         Twitter.follow status.source.id
       end
     end
+  when status.event == 'favorite'
+    next if status.source.screen_name == account
+    next unless Twitter.friendship?(status.source.screen_name, account)
+    timeline = Twitter.user_timeline(status.source.screen_name).select {|s|
+      !s.retweeted_status && !s.in_reply_to_status_id && !s.favorited
+    }
+    next if timeline.empty?
+    target = timeline[rand timeline.size]
+    begin
+      Twitter.favorite_create target.id
+      Twitter.retweet target.id
+    rescue
+    end
   when status.direct_message
     if status.direct_message.sender_screen_name == config['author']
       Twitter.update status.direct_message.text
