@@ -5,48 +5,44 @@ require 'json'
 require 'twitter'
 require 'userstream'
 
-PATTERN = Regexp.union([
-  /☆|★/,
-  /スター/,
-  /消し(?:ゴム|ごむ)/,
-  /eraser/,
-  /fav/,
-  /(?:\A|[^@])mono/i,
-  /ふぁぼ/,
-  /黄色/,
-  /サンダース/,
-  /パチリス/,
-  /シマリス/,
-  /インデント/,
-  /\(＃＾ω＾\)/,
-  /生首/,
-  /test/,
-  /放送/,
-])
+module Eraser
+  class Config
+    def self.load(path)
+      c = new()
+      c.instance_eval open(path).read
+      c
+    end
+
+    attr_reader :account
+    attr_reader :author
+    attr_reader :oauth
+    attr_reader :pattern
+  end
+end
 
 messages = JSON.parse(open('messages.json', 'r:utf-8').read)['messages']
 
-config = JSON.parse(open('config.json').read)
+config = Eraser::Config.load('eraser.conf')
 
-account = config['account']
-oauth   = config['oauth']
+account = config.account
+oauth   = config.oauth
 
 Twitter.configure do |c|
-  c.consumer_key       = oauth['consumer_key']
-  c.consumer_secret    = oauth['consumer_secret']
-  c.oauth_token        = oauth['oauth_token']
-  c.oauth_token_secret = oauth['oauth_token_secret']
+  c.consumer_key       = oauth[:consumer_key]
+  c.consumer_secret    = oauth[:consumer_secret]
+  c.oauth_token        = oauth[:oauth_token]
+  c.oauth_token_secret = oauth[:oauth_token_secret]
 end
 
 consumer = OAuth::Consumer.new(
-  oauth['consumer_key'],
-  oauth['consumer_secret'],
+  oauth[:consumer_key],
+  oauth[:consumer_secret],
   :site => 'https://userstream.twitter.com/')
 
 access_token = OAuth::AccessToken.new(
   consumer,
-  oauth['oauth_token'],
-  oauth['oauth_token_secret'])
+  oauth[:oauth_token],
+  oauth[:oauth_token_secret])
 
 userstream = Userstream.new(consumer, access_token)
 userstream.user do |status|
@@ -72,7 +68,7 @@ userstream.user do |status|
     rescue
     end
   when status.direct_message
-    if status.direct_message.sender_screen_name == config['author']
+    if status.direct_message.sender_screen_name == config.author
       Twitter.update status.direct_message.text
     end
   when status.text
@@ -95,7 +91,7 @@ userstream.user do |status|
         :in_reply_to_status_id => status.id)
       next
     end
-    next unless status.text =~ PATTERN
+    next unless status.text =~ config.pattern
     unless Twitter.friendship?(status.user.screen_name, account)
       Twitter.unfollow status.user.id
       next
