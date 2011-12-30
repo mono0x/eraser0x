@@ -24,39 +24,41 @@ messages = JSON.parse(open('messages.json', 'r:utf-8').read)['messages']
 
 config = Eraser::Config.load('eraser.conf')
 
-account = config.account
-oauth   = config.oauth
-
 Twitter.configure do |c|
-  c.consumer_key       = oauth[:consumer_key]
-  c.consumer_secret    = oauth[:consumer_secret]
-  c.oauth_token        = oauth[:oauth_token]
-  c.oauth_token_secret = oauth[:oauth_token_secret]
+  c.consumer_key       = config.oauth[:consumer_key]
+  c.consumer_secret    = config.oauth[:consumer_secret]
+  c.oauth_token        = config.oauth[:oauth_token]
+  c.oauth_token_secret = config.oauth[:oauth_token_secret]
 end
 
 consumer = OAuth::Consumer.new(
-  oauth[:consumer_key],
-  oauth[:consumer_secret],
+  config.oauth[:consumer_key],
+  config.oauth[:consumer_secret],
   :site => 'https://userstream.twitter.com/')
 
 access_token = OAuth::AccessToken.new(
   consumer,
-  oauth[:oauth_token],
-  oauth[:oauth_token_secret])
+  config.oauth[:oauth_token],
+  config.oauth[:oauth_token_secret])
+
+Signal.trap :HUP do
+  STDERR.puts 'SIGHUP'
+  config = Eraser::Config.load('eraser.conf')
+end
 
 userstream = Userstream.new(consumer, access_token)
 userstream.user do |status|
   STDERR.puts status.inspect
   case
   when status.event == 'follow'
-    if status.source.screen_name != account
-      unless Twitter.friendship?(account, status.source.screen_name)
+    if status.source.screen_name != config.account
+      unless Twitter.friendship?(config.account, status.source.screen_name)
         Twitter.follow status.source.id
       end
     end
   when status.event == 'favorite'
-    next if status.source.screen_name == account
-    next unless Twitter.friendship?(status.source.screen_name, account)
+    next if status.source.screen_name == config.account
+    next unless Twitter.friendship?(status.source.screen_name, config.account)
     timeline = Twitter.user_timeline(status.source.screen_name).select {|s|
       !s.retweeted_status && !s.in_reply_to_status_id && !s.favorited
     }
@@ -73,9 +75,9 @@ userstream.user do |status|
     end
   when status.text
     next if status.retweeted_status
-    if status.text =~ /\A@#{account}\s+(.+)\Z/m
+    if status.text =~ /\A@#{config.account}\s+(.+)\Z/m
       m = $1.gsub(/[@#]/, '_')
-      unless Twitter.friendship?(status.user.screen_name, account)
+      unless Twitter.friendship?(status.user.screen_name, config.account)
         Twitter.unfollow status.user.id
         next
       end
@@ -92,7 +94,7 @@ userstream.user do |status|
       next
     end
     next unless status.text =~ config.pattern
-    unless Twitter.friendship?(status.user.screen_name, account)
+    unless Twitter.friendship?(status.user.screen_name, config.account)
       Twitter.unfollow status.user.id
       next
     end
