@@ -1,2 +1,2 @@
-eraser.conf
-messages.json
+data/database.sqlite3
+.env
