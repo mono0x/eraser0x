@@ -106,7 +106,3 @@ module Eraser
 
   end
 end
-
-app = Eraser::Application.new
-app.run
-
