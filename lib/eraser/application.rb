@@ -75,7 +75,7 @@ module Eraser
           end
           twitter.favorite_create status.id
           twitter.retweet status.id
-          if rand < 0.05
+          if rand < 0.5
             twitter.update(
               "@#{status.user.screen_name} #{Message.random.text}",
               :in_reply_to_status_id => status.id)
