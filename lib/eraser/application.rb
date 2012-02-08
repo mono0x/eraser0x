@@ -102,6 +102,7 @@ module Eraser
       /test/,
       /放送/,
       /鍋/,
+      %r{帰.?っ.?た},
     ])
 
   end
