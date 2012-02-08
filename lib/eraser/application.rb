@@ -44,7 +44,7 @@ module Eraser
             !s.retweeted_status && !s.in_reply_to_status_id && !s.favorited
           }
           next if timeline.empty?
-          target = timeline[rand timeline.size]
+          target = timeline.sample
           begin
             twitter.favorite_create target.id
             twitter.retweet target.id
