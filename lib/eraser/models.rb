@@ -10,7 +10,7 @@ module Eraser
     property :text, String, :required => true, :unique => true
 
     def self.random
-      get rand(count) + 1
+      get rand(all.count) + 1
     end
   end
 end
