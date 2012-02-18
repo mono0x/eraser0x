@@ -6,17 +6,15 @@ require 'dm-migrations'
 root = File.dirname(__FILE__)
 $:.unshift File.join(root, 'lib')
 
-require 'eraser/models'
-
-DataMapper.setup :default, ENV['DATABASE_URL']
+require 'eraser'
 
 namespace :db do
   task :migrate do
-    DataMapper.auto_migrate!
+    Eraser::Database.connect.migrate!
   end
 
   task :upgrade do
-    DataMapper.auto_upgrade!
+    Eraser::Database.connect.upgrade!
   end
 
   task :import, 'file' do |t, a|

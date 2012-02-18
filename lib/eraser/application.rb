@@ -1,13 +1,5 @@
 # -*- coding: utf-8 -*-
 
-require 'bundler/setup'
-require 'twitter'
-require 'userstream'
-
-require 'eraser/models'
-
-DataMapper.setup :default, ENV['DATABASE_URL']
-
 module Eraser
   class Application
     def run
@@ -26,6 +18,8 @@ module Eraser
         consumer,
         ENV['TWITTER_OAUTH_TOKEN'],
         ENV['TWITTER_OAUTH_TOKEN_SECRET'])
+
+      random = Random.new
 
       userstream = ::Userstream.new(consumer, access_token)
       userstream.user do |status|
@@ -64,7 +58,7 @@ module Eraser
             end
             Message.first_or_create :text => m
             twitter.update(
-              "@#{status.user.screen_name} #{Message.random.text}",
+              "@#{status.user.screen_name} #{Message.random(random).text}",
               :in_reply_to_status_id => status.id)
             next
           end
@@ -77,7 +71,7 @@ module Eraser
           twitter.retweet status.id
           if rand < 0.5
             twitter.update(
-              "@#{status.user.screen_name} #{Message.random.text}",
+              "@#{status.user.screen_name} #{Message.random(random).text}",
               :in_reply_to_status_id => status.id)
           end
         end

@@ -9,10 +9,9 @@ module Eraser
     property :id, Serial
     property :text, String, :required => true, :unique => true
 
-    def self.random
-      get rand(all.count) + 1
+    def self.random(r)
+      raise 'database is empty' if all.empty?
+      get r.rand(all.count) + 1
     end
   end
 end
-
-DataMapper.finalize

@@ -1,2 +1,3 @@
+coverage/
 data/database.sqlite3
 .env
