@@ -1,8 +1,8 @@
 
 source "http://rubygems.org"
 
-gem 'twitter', '1.7.2'
-gem 'userstream'
+gem 'twitter'
+gem 'userstream', :require => 'user_stream'
 gem 'foreman'
 gem 'rake'
 gem 'data_mapper'
