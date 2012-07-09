@@ -23,11 +23,10 @@ module Eraser
         STDERR.puts status.inspect
         case
         when status.event == 'follow'
-          if status.source.screen_name != ENV['ACCOUNT']
-            unless Twitter.friendship?(ENV['ACCOUNT'], status.source.screen_name)
-              Twitter.follow status.source.id
-            end
-          end
+          next if status.source.screen_name == ENV['ACCOUNT']
+          next if Twitter.friendship?(ENV['ACCOUNT'], status.source.screen_name)
+          next unless Twitter.friendship?(ENV['AUTHOR'], status.source.screen_name)
+          Twitter.follow status.source.id
         when status.event == 'favorite'
           next if status.source.screen_name == ENV['ACCOUNT']
           next unless Twitter.friendship?(status.source.screen_name, ENV['ACCOUNT'])
