@@ -1,5 +1,6 @@
 
 source "http://rubygems.org"
+ruby '1.9.3'
 
 gem 'twitter'
 gem 'userstream', :require => 'user_stream'
