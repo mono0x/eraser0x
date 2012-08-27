@@ -100,8 +100,8 @@ module Eraser
               Twitter.update(
                 "@#{status.user.screen_name} #{Message.random(random).text}",
                 :in_reply_to_status_id => status.id)
-              next
             end
+            next
           end
           next unless status.text =~ PATTERN
           unless Twitter.friendship?(status.user.screen_name, ENV['ACCOUNT'])
