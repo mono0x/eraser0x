@@ -17,6 +17,38 @@ module Eraser
         config.oauth_token_secret = ENV['TWITTER_OAUTH_TOKEN_SECRET']
       end
 
+      horoscopes_messages = {
+        capricorn:   'やぎ座',
+        aquarius:    'みずがめ座',
+        pisces:      'うお座',
+        aries:       'おひつじ座',
+        taurus:      'おうし座',
+        gemini:      'ふたご座',
+        cancer:      'かに座',
+        leo:         'しし座',
+        virgo:       'おとめ座',
+        libra:       'てんびん座',
+        scorpius:    'さそり座',
+        sagittarius: 'いて座',
+      }
+
+      paper_fortune_messages = [
+        '大吉',
+        '中吉',
+        '小吉',
+        '吉',
+        '半吉',
+        '末吉',
+        '末小吉',
+        '凶',
+        '小凶',
+        '半凶',
+        '末凶',
+        '大凶',
+      ]
+
+      paper_fortune_weights = [ 3, 5, 7, 10, 10, 15, 15, 10, 10, 7, 5, 3 ]
+
       random = Random.new
 
       UserStream.client.user do |status|
@@ -52,11 +84,24 @@ module Eraser
               Twitter.unfollow status.user.id
               next
             end
-            Message.first_or_create :text => m
-            Twitter.update(
-              "@#{status.user.screen_name} #{Message.random(random).text}",
-              :in_reply_to_status_id => status.id)
-            next
+            case m
+            when /おみくじ/
+              p = paper_fortune_messages[PaperFortune.paper_fortune(paper_fortune_weights, Date.today, status.user.screen_name)]
+              Twitter.update(
+                "@#{status.user.screen_name} #{p}",
+                :in_reply_to_status_id => status.id)
+            when %r!星座占い.*?(?:(\d+)[月/](\d+)|(#{Regexp.union(horoscopes_messages.values)}))!
+              a = horoscopes_messages.key($3) || Horoscopes.astrology(Date.new(2000, $1.to_i, $2.to_i))
+              Twitter.update(
+                "@#{status.user.screen_name} #{horoscopes_messages[a]}: #{Horoscopes.horoscopes.find_index {|h| h == a } + 1}位",
+                :in_reply_to_status_id => status.id)
+            else
+              Message.first_or_create :text => m
+              Twitter.update(
+                "@#{status.user.screen_name} #{Message.random(random).text}",
+                :in_reply_to_status_id => status.id)
+              next
+            end
           end
           next unless status.text =~ PATTERN
           unless Twitter.friendship?(status.user.screen_name, ENV['ACCOUNT'])
