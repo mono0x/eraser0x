@@ -108,8 +108,11 @@ module Eraser
             Twitter.unfollow status.user.id
             next
           end
-          Twitter.favorite_create status.id
-          Twitter.retweet status.id
+          begin
+            Twitter.favorite_create status.id
+            Twitter.retweet status.id
+          rescue Twitter::Error
+          end
           if rand < 0.5
             Twitter.update(
               "@#{status.user.screen_name} #{Message.random(random).text}",
