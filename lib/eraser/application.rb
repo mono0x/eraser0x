@@ -53,72 +53,76 @@ module Eraser
 
       UserStream.client.user do |status|
         STDERR.puts status.inspect
-        case
-        when status.event == 'follow'
-          next if status.source.screen_name == ENV['ACCOUNT']
-          next if Twitter.friendship?(ENV['ACCOUNT'], status.source.screen_name)
-          next unless Twitter.friendship?(ENV['AUTHOR'], status.source.screen_name)
-          Twitter.follow status.source.id
-        when status.event == 'favorite'
-          next if status.source.screen_name == ENV['ACCOUNT']
-          next unless Twitter.friendship?(status.source.screen_name, ENV['ACCOUNT'])
-          timeline = Twitter.user_timeline(status.source.screen_name).select {|s|
-            !s.retweeted_status && !s.in_reply_to_status_id && !s.favorited
-          }
-          next if timeline.empty?
-          target = timeline.sample
-          begin
-            Twitter.favorite_create target.id
-            Twitter.retweet target.id
-          rescue
-          end
-        when status.direct_message
-          if status.direct_message.sender_screen_name == ENV['AUTHOR']
-            Twitter.update status.direct_message.text
-          end
-        when status.text
-          next if status.retweeted_status
-          if status.text =~ /\A@#{ENV['ACCOUNT']}\s+(.+)\Z/m
-            m = $1.gsub(/[@#]/, '_')
+        begin
+          case
+          when status.event == 'follow'
+            next if status.source.screen_name == ENV['ACCOUNT']
+            next if Twitter.friendship?(ENV['ACCOUNT'], status.source.screen_name)
+            next unless Twitter.friendship?(ENV['AUTHOR'], status.source.screen_name)
+            Twitter.follow status.source.id
+          when status.event == 'favorite'
+            next if status.source.screen_name == ENV['ACCOUNT']
+            next unless Twitter.friendship?(status.source.screen_name, ENV['ACCOUNT'])
+            timeline = Twitter.user_timeline(status.source.screen_name).select {|s|
+              !s.retweeted_status && !s.in_reply_to_status_id && !s.favorited
+            }
+            next if timeline.empty?
+            target = timeline.sample
+            begin
+              Twitter.favorite_create target.id
+              Twitter.retweet target.id
+            rescue
+            end
+          when status.direct_message
+            if status.direct_message.sender_screen_name == ENV['AUTHOR']
+              Twitter.update status.direct_message.text
+            end
+          when status.text
+            next if status.retweeted_status
+            if status.text =~ /\A@#{ENV['ACCOUNT']}\s+(.+)\Z/m
+              m = $1.gsub(/[@#]/, '_')
+              unless Twitter.friendship?(status.user.screen_name, ENV['ACCOUNT'])
+                Twitter.unfollow status.user.id
+                next
+              end
+              case m
+              when /おみくじ/
+                p = paper_fortune_messages[PaperFortune.paper_fortune(paper_fortune_weights, Date.today, status.user.screen_name)]
+                Twitter.update(
+                  "@#{status.user.screen_name} #{p}",
+                  :in_reply_to_status_id => status.id)
+              when %r!星座占い.*?(?:(\d+)[月/](\d+)|(#{Regexp.union(horoscopes_messages.values)}))!
+                a = horoscopes_messages.key($3) || Horoscopes.astrology(Date.new(2000, $1.to_i, $2.to_i))
+                Twitter.update(
+                  "@#{status.user.screen_name} #{horoscopes_messages[a]}: #{Horoscopes.horoscopes.find_index {|h| h == a } + 1}位",
+                  :in_reply_to_status_id => status.id)
+              else
+                Message.first_or_create :text => m
+                Twitter.update(
+                  "@#{status.user.screen_name} #{Message.random(random).text}",
+                  :in_reply_to_status_id => status.id)
+              end
+              next
+            end
+            next unless status.text =~ PATTERN
             unless Twitter.friendship?(status.user.screen_name, ENV['ACCOUNT'])
               Twitter.unfollow status.user.id
               next
             end
-            case m
-            when /おみくじ/
-              p = paper_fortune_messages[PaperFortune.paper_fortune(paper_fortune_weights, Date.today, status.user.screen_name)]
-              Twitter.update(
-                "@#{status.user.screen_name} #{p}",
-                :in_reply_to_status_id => status.id)
-            when %r!星座占い.*?(?:(\d+)[月/](\d+)|(#{Regexp.union(horoscopes_messages.values)}))!
-              a = horoscopes_messages.key($3) || Horoscopes.astrology(Date.new(2000, $1.to_i, $2.to_i))
-              Twitter.update(
-                "@#{status.user.screen_name} #{horoscopes_messages[a]}: #{Horoscopes.horoscopes.find_index {|h| h == a } + 1}位",
-                :in_reply_to_status_id => status.id)
-            else
-              Message.first_or_create :text => m
+            begin
+              Twitter.favorite_create status.id
+              Twitter.retweet status.id
+            rescue Twitter::Error
+            end
+            if rand < 0.5
               Twitter.update(
                 "@#{status.user.screen_name} #{Message.random(random).text}",
                 :in_reply_to_status_id => status.id)
             end
-            next
-          end
-          next unless status.text =~ PATTERN
-          unless Twitter.friendship?(status.user.screen_name, ENV['ACCOUNT'])
-            Twitter.unfollow status.user.id
-            next
-          end
-          begin
-            Twitter.favorite_create status.id
-            Twitter.retweet status.id
-          rescue Twitter::Error
-          end
-          if rand < 0.5
-            Twitter.update(
-              "@#{status.user.screen_name} #{Message.random(random).text}",
-              :in_reply_to_status_id => status.id)
           end
         end
+      rescue Twitter::Error
+        STDERR.puts $!
       end
     end
 
