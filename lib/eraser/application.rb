@@ -120,9 +120,9 @@ module Eraser
                 :in_reply_to_status_id => status.id)
             end
           end
+        rescue Twitter::Error
+          STDERR.puts $!
         end
-      rescue Twitter::Error
-        STDERR.puts $!
       end
     end
 
