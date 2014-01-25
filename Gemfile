@@ -2,7 +2,7 @@
 source "http://rubygems.org"
 ruby '2.1.0'
 
-gem 'twitter'
+gem 'twitter', '~> 4.5.0'
 gem 'userstream', :require => 'user_stream'
 gem 'foreman'
 gem 'rake'
