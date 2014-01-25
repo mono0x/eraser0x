@@ -69,7 +69,9 @@ module Eraser
             next if timeline.empty?
             target = timeline.sample
             begin
+              STDERR.puts "Favorite #{target.id}"
               Twitter.favorite_create target.id
+              STDERR.puts "Retweet #{target.id}"
               Twitter.retweet target.id
             rescue
             end
@@ -110,11 +112,14 @@ module Eraser
               next
             end
             begin
+              STDERR.puts "Favorite #{status.id}"
               Twitter.favorite_create status.id
+              STDERR.puts "Retweet #{status.id}"
               Twitter.retweet status.id
             rescue Twitter::Error
             end
             if rand < 0.5
+              STDERR.puts "Reply to #{status.id}"
               Twitter.update(
                 "@#{status.user.screen_name} #{Message.random(random).text}",
                 :in_reply_to_status_id => status.id)
